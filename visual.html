@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:600,400,300" rel="stylesheet" type="text/css">
+    <style>
+
+        body {
+            font-family: 'Open Sans', "Open Sans", "lucida grande", arial, verdana, sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+
+        svg {
+            font: 10px sans-serif;
+        }
+
+        .background path {
+            fill: none;
+            stroke: #ccc;
+            stroke-opacity: .4;
+            shape-rendering: crispEdges;
+        }
+
+        .foreground path {
+            fill: none;
+            stroke: steelblue;
+            stroke-opacity: .7;
+        }
+
+        .brush .extent {
+            fill-opacity: .3;
+            stroke: #fff;
+            shape-rendering: crispEdges;
+        }
+
+        .axis line, .axis path {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+        .axis text {
+            text-shadow: 0 1px 0 #fff;
+        }
+
+        circle {
+            stroke: navy;
+        }
+
+        .university {
+            fill: #34495e;
+        }
+
+        .investor {
+            fill: #c0392b;
+        }
+
+        .company {
+            fill: #27ae60;
+        }
+
+        .link {
+            stroke: grey;
+            stroke-width: 1;
+        }
+
+        .node {
+            stroke-width: 1;
+        }
+
+        .selected {
+            stroke-width: 2;
+            font-weight: bold;
+            opacity: 1.0;
+        }
+
+        .selected-link {
+            stroke: #27ae60;
+            stroke-width: 2;
+            stroke-opacity: 0.8;
+        }
+
+        .big-label {
+            font-size: 13px;
+            text-anchor: middle;
+        }
+
+        #tooltip {
+            height: auto;
+            padding: 8px;
+            position: absolute;
+            top: 100px;
+            background: #FFFFFF;
+            color: #000000;
+            border: 2px solid;
+            border-radius: 5px;
+            z-index: 1000;
+            font-size: 10pt;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        hr {
+            border-color: black;
+        }
+
+        .right {
+            float: right;
+            display: block;
+        }
+
+
+
+    </style>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.2/d3.min.js"></script>
+    <script src="http://d3js.org/queue.v1.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.7.0/underscore-min.js"></script>
+</head>
+<body>
+<h1>QUANTIFYING BRAIN FLOW</h1>
+<script>
+    var max_width = 960;
+    var tooltip_width = 340;
+    var margin = {top: 30, right: 20, bottom: 40, left: 300},
+            width =  max_width - margin.left - margin.right,
+            height = 700 - margin.top - margin.bottom;
+
+    var x = d3.scale.ordinal().rangePoints([0, width], .5).domain(['university', 'company', 'investor']);
+
+    var line = d3.svg.line(),
+            axis = d3.svg.axis().orient("left"),
+            background,
+            foreground;
+
+    var svg = d3.select("body").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var tooltip = d3.select("body").append('div')
+            .style('left', (max_width + 20).toString() + "px")
+            .style('width', tooltip_width.toString() + "px")
+            .attr('id', 'tooltip').classed('hidden', true);
+
+
+    var format = d3.format("$,");
+
+
+    d3.json("graph.json", function (data) {
+
+        function get_universities_for_company(node){
+            var unis = [];
+            node.links.forEach(function(d) {
+                    var link = data.links[d];
+                    if (link.w) {
+                        var node_id = link.s == node.id ? link.t : link.s;
+                        var target = data.nodes[node_id];
+                        unis.push({'name': target.name, 'w': link.w});
+                    }
+                });
+            unis.sort(function (a, b) {
+                return d3.descending(a.w, b.w)
+            });
+            return unis
+        }
+
+        function get_companies_for_university(node){
+            var companies = [];
+            node.links.forEach(function(d) {
+                    var link = data.links[d];
+                    if (link.w) {
+                        var node_id = link.s == node.id ? link.t : link.s;
+                        var target = data.nodes[node_id];
+                        companies.push({'name': target.name, 'w': link.w, 'money': target.value});
+                    }
+                });
+
+            return companies
+        }
+
+        function get_companies_for_investor(node){
+            var companies = [];
+            node.links.forEach(function(d) {
+                    var link = data.links[d];
+                    var node_id = link.s == node.id ? link.t : link.s;
+                    var target = data.nodes[node_id];
+                    var universities = get_universities_for_company(target);
+                    companies.push({'name': target.name, 'universities': universities});
+                });
+
+            return companies
+        }
+
+        function create_string_for_node(node) {
+            var str = "";
+            if (node.type == 'company') {
+                str += "<h1>"+ node.name + "</h1>";
+                str += "<center>Company</center><br>";
+                str += "<b>Total funds raised</b><span class='right'>" + format(node.value) + "</span><br>";
+
+                var investors_str = "";
+                node.neighbors.forEach(function (d) {
+                    var n = data.nodes[d];
+                    if (n.type == "investor") {
+                        investors_str += n.name + "<br>";
+                    }
+                });
+
+                if (investors_str){
+                    str += "<hr><b>Investors</b> <br>";
+                    str += investors_str
+                }
+
+                var universities_str = "";
+                var unis = get_universities_for_company(node).slice(0, 5);
+
+                unis.forEach(function(u){
+                    universities_str += u.name + "<span class='right'>" + u.w + "</span><br>";
+                });
+
+                if (universities_str){
+                    str += "<hr><b>Universities contribution (persons)</b> <br>";
+                    str += universities_str;
+                }
+
+            }
+
+            if (node.type == 'investor') {
+                str += "<h1>"+ node.name + "</h1>";
+                str += "<center>Investor</center><br>";
+                str += "<b>Total investments</b><span class='right'>" + format(node.value)  + "</span><br>";
+                var companies = get_companies_for_investor(node);
+
+                var invested_in_str = "";
+                var universities_count = [];
+                companies.forEach(function(d){
+                    invested_in_str += d.name + "<br>";
+                    d.universities.forEach(function(u){
+                        for (var c = 0; c < u.w; c++){
+                            universities_count.push(u.name);
+                        }
+                    })
+                });
+
+                if (invested_in_str){
+                    str += '<hr><b>Invested in</b><br>';
+                    str += invested_in_str;
+                }
+
+                var count = _.countBy(universities_count);
+                var sortable = [];
+                var uni_str = "";
+                for (var o in count){
+                    sortable.push({'name':o, 'count': count[o]})
+                }
+                sortable.sort(function (a, b) {
+                    return d3.descending(a.count, b.count)
+                });
+                sortable.slice(0,5).forEach(function(d){
+                    uni_str += d.name + "<span class='right'>" + d.count +"</span><br>";
+                });
+
+                if (uni_str){
+                    str += '<hr><b>Companies employ people from</b><br>';
+                    str += uni_str;
+                }
+
+
+            }
+
+            if (node.type == 'university') {
+                str += "<h1>"+ node.name + "</h1>";
+                str += "<center>University</center><br>";
+                str += "<b>Number of people</b><span class='right'>" + node.value + "</span><br>";
+                str += "<b>Number of companies provided to</b><span class='right'>" + node.degree + "</span><br>";
+                var companies = get_companies_for_university(node);
+                var value = 0;
+                var people = 0;
+                var total_value = 0;
+                companies.forEach(function(d){
+                    value += d.w*d.money;
+                    people += d.w;
+                    total_value += d.money;
+                });
+
+                var top_contribution = "";
+                companies.sort(function (a, b) {
+                    return d3.descending(a.w, b.w)
+                });
+                companies.slice(0, 5).forEach(function (d) {
+                    top_contribution += d.name + "<span class='right'>" + d.w + "</span><br>";
+                });
+                if (top_contribution) {
+                    str += '<hr><b>Most contributions to</b><br>';
+                    str += top_contribution;
+                }
+
+                str += "<hr><b>Total funding raised</b><span class='right'>" + format(Math.round(total_value))  + "</span><br>";
+                str += "<hr><b><i>Average funding raised per person</i></b><span class='right'>" + format(Math.round(value/people))  + "</span><br>";
+
+            }
+
+            return str;
+        }
+
+
+        var link_opacity_scale = d3.scale.linear().range([0.05, 0.2]).domain(d3.extent(d3.values(data.links), function (d) {
+            return +d.w;
+        }));
+
+        var link_thickness_scale = d3.scale.linear().range([1, 5]).domain(d3.extent(d3.values(data.links), function (d) {
+            return +d.w;
+        }));
+
+        function create_scale(data) {
+            return d3.scale.linear().range([height, 0]).domain([0, data.length]);
+        }
+
+        var uni_data = d3.values(data.nodes).filter(function (d) {
+            return d.type == 'university'
+        });
+        var company_data = d3.values(data.nodes).filter(function (d) {
+            return d.type == 'company'
+        });
+        var investor_data = d3.values(data.nodes).filter(function (d) {
+            return d.type == 'investor'
+        });
+
+        var university_scale = create_scale(uni_data);
+        var company_scale = create_scale(company_data);
+        var investor_scale = create_scale(investor_data);
+
+        uni_data.sort(function (a, b) {
+            return d3.ascending(a.value, b.value)
+        });
+        company_data.sort(function (a, b) {
+            return d3.ascending(a.value, b.value)
+        });
+        investor_data.sort(function (a, b) {
+            return d3.ascending(a.value, b.value)
+        });
+
+        for (var i = 0; i < uni_data.length; i++) {
+            var node = uni_data[i];
+            node.class_name = node.type;
+            node.x = x(node.type);
+            node.y = Math.floor(university_scale(i));
+        }
+
+        for (var j = 0; j < company_data.length; j++) {
+            var node = company_data[j];
+            node.class_name = node.type;
+            node.x = x(node.type) + Math.floor(150 * (Math.random() - 0.5));
+            node.y = Math.floor(company_scale(j));
+        }
+
+        for (var k = 0; k < investor_data.length; k++) {
+            var node = investor_data[k];
+            node.class_name = node.type;
+            node.x = x(node.type) + Math.floor(150 * (Math.random() - 0.5));
+            node.y = Math.floor(investor_scale(k));
+        }
+
+        d3.keys(data.links).forEach(function (key) {
+            var link = data.links[key];
+
+            if (link.w == null) {
+                link.opacity = 0.1
+            } else {
+                link.opacity = parseFloat(link_opacity_scale(link.w).toFixed(2))
+            }
+        });
+
+        svg.append('text').attr('class', 'big-label').attr('x', x('university')).attr('y', height + 30).text('Universities');
+        svg.append('text').attr('class', 'big-label').attr('x', x('company')).attr('y', height + 30).text('Companies');
+        svg.append('text').attr('class', 'big-label').attr('x', x('investor')).attr('y', height + 30).text('Investors');
+
+        var links = svg.selectAll('line')
+                .data(d3.values(data.links))
+                .enter()
+                .append('line')
+                .attr('class', 'link')
+                .attr('stroke-opacity', function (d) {
+                    return d.opacity;
+                })
+                .attr("x1", function (d) {
+                    return data.nodes[d.s].x
+                })
+                .attr("y1", function (d) {
+                    return data.nodes[d.s].y
+                })
+                .attr("x2", function (d) {
+                    return data.nodes[d.t].x
+                })
+                .attr("y2", function (d) {
+                    return data.nodes[d.t].y
+                });
+
+        var nodes = svg.selectAll('node')
+                .data(d3.values(data.nodes))
+                .enter()
+                .append("g")
+                .attr("class", function (d) {
+                    return d.class_name
+                })
+                .classed("node", true);
+
+        nodes.each(function(d){
+            d.neighbourhood = nodes.filter(function(dd) { return _.contains(d.neighbors, dd.id); });
+            d.connections = links.filter(function(dd) { return _.contains(d.links, dd.id); })
+        });
+
+        nodes.on("mouseover", function (d) {
+            nodes.transition().duration(200).ease('linear').attr('opacity', 0.1);
+            d3.select(this).classed('selected', true);
+            d.neighbourhood.classed('selected', true);
+            d.connections.classed('selected-link', true);
+
+
+            tooltip.html(create_string_for_node(d));
+            tooltip.classed('hidden', false);
+
+        }).on("mouseout", function (d) {
+            nodes.transition().duration(200).ease('linear').attr('opacity', 1.0);
+            d3.select(this).classed('selected', false);
+            d.neighbourhood.classed('selected', false);
+            d.connections.classed('selected-link', false)
+
+            tooltip.classed('hidden', true);
+            tooltip.html("");
+        });
+
+        nodes.append('circle')
+                .attr("r", 5)
+                .attr("cx", function (d) {
+                    return d.x
+                })
+                .attr("cy", function (d) {
+                    return d.y
+                });
+
+        svg.selectAll('.university')
+                .append('text')
+                .attr("text-anchor", "end")
+                .attr("y", function (d) {
+                    return d.y + 3;
+                })
+                .attr("x", function (d) {
+                    return d.x - 10
+                })
+                .text(function (d) {
+                    return d.name;
+                });
+
+
+    });
+</script>
+
+</body>
+</html>
