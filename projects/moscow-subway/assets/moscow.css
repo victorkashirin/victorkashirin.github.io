@@ -1,0 +1,169 @@
+html, body, #map {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+}
+
+* {
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+
+body {
+    padding: 0;
+    margin: 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.controls-timeline {
+    position: absolute;
+    z-index: 1000;
+    pointer-events: none;
+    right: 0;
+    bottom: 0;
+}
+
+#logo {
+    position: absolute;
+    top: 0px;
+    left: 8px;
+    z-index: 9999;
+    visibility: hidden;
+    cursor: pointer;
+}
+
+.controls-logo {
+    pointer-events: all;
+    cursor: pointer;
+}
+
+.controls-date {
+    font-family: 'Roboto Condensed', monospace;
+}
+
+.label-line {
+    cursor: pointer;
+    pointer-events: all;
+}
+
+.label-line-color {
+    stroke: black;
+    stroke-width: 0px;
+}
+
+.label-line-number {
+    fill: white;
+    font-size: 0.8em;
+    /*stroke-width: 2px;*/
+}
+
+.label-line-text {
+    font-family: 'Roboto Condensed', monospace;
+    font-size: 1.1em;
+}
+
+.control-button {
+    fill: #EFEFEF;
+    stroke: black;
+    cursor: pointer;
+    pointer-events: all;
+}
+
+.control-button:hover {
+    fill: #F9F9F9;
+}
+
+.control-button:active {
+    fill: #FFEFB4;
+}
+
+.control-group > text {
+    /*font-size: 0.5em;*/
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+}
+
+.line {
+    cursor: pointer;
+    fill: none;
+    stroke-opacity: 0;
+}
+
+.line-select {
+    cursor: pointer;
+    fill: none;
+    stroke-opacity: 0;
+    stroke: grey;
+}
+
+.transferline {
+    stroke-linecap: round;
+    opacity: 0.6 !important;
+    stroke: #B0C4DE !important;
+}
+
+.station-marker {
+    fill: white;
+    opacity: 1;
+    stroke-linejoin: round;
+}
+
+.station-label {
+    stroke-width: 0;
+    /*font-family: "Roboto Mono", monospace;font-weight: 400;*/
+    font-family: "Roboto Condensed", monospace;
+    font-weight: 300;
+    /*font-family: "Open Sans Condensed", monospace;font-weight: 300;*/
+    font-size: 10px;
+    /*dominant-baseline: central;*/
+    baseline-shift: -31%;
+}
+
+.time-mark-back {
+    fill: #666;
+    opacity: 1.0;
+    stroke: #204B9B;
+}
+
+.time-mark-text {
+    fill: #d86d72;
+    opacity: 1.0;
+    stroke: #204B9B;
+    cursor: pointer;
+    pointer-events: all;
+    font-family: FontAwesome;
+    font-size: 2.5em;
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+
+.time-mark-text:active {
+    stroke-width: 1.5px;
+}
+
+.time-mark-text:hover {
+    fill: orange;
+}
+
+.debugbbox {
+    fill: none;
+    stroke: #444;
+    opacity: 0.3;
+}
+
+.hidden-label {
+    visibility: hidden;
+}
+
+.tick text {
+    /*font-family: "Roboto Mono", monospace;*/
+}
+
+.leaflet-control-attribution {
+    visibility: hidden;
+}
