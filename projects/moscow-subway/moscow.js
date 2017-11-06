@@ -230,10 +230,10 @@
         function createButtons() {
             var buttonsGroup = controlsSvg.append('g');
             var buttonsData = [
-                ['prevevent', 'событие', '\uf13a'],
-                ['nextevent', 'событие', '\uf139'],
-                ['prevyear', 'квартал', '\uf137'],
-                ['nextyear', 'квартал', '\uf138'],
+                ['prevevent', 'событие', '\uf137'],
+                ['nextevent', 'событие', '\uf138'],
+                ['prevyear', 'квартал', '\uf13a'],
+                ['nextyear', 'квартал', '\uf139'],
                 ['animate', 'авто', '\uf144'],
                 ['labelsswitch', 'подписи', '\uf06e']
             ];
@@ -1041,22 +1041,22 @@
                 visualConfig.tolerance += 0.1;
                 update(true);
             }
-            if (event.code === 'ArrowLeft') {
+            if (event.code === 'ArrowDown') {
                 animationControls.stopAnimation();
                 timeControls.changeInterval(-3);
                 update(false);
             }
-            if (event.code === 'ArrowRight') {
+            if (event.code === 'ArrowUp') {
                 animationControls.stopAnimation();
                 timeControls.changeInterval(3);
                 update(false);
             }
-            if (event.code === 'ArrowUp') {
+            if (event.code === 'ArrowRight') {
                 animationControls.stopAnimation();
                 timeControls.nextEvent(1);
                 update(false);
             }
-            if (event.code === 'ArrowDown') {
+            if (event.code === 'ArrowLeft') {
                 animationControls.stopAnimation();
                 timeControls.nextEvent(-1);
                 update(false);
