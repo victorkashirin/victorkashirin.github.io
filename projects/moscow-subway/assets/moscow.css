@@ -131,7 +131,7 @@ body {
 }
 
 .time-mark-text {
-    fill: #d86d72;
+    fill: #999999;
     opacity: 1.0;
     stroke: #204B9B;
     cursor: pointer;
@@ -147,7 +147,7 @@ body {
 }
 
 .time-mark-text:hover {
-    fill: orange;
+    fill: red;
 }
 
 .debugbbox {
