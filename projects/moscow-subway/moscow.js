@@ -287,7 +287,7 @@
             controlsSvg
                 .append('image')
                 .attr('class', 'controls-logo')
-                .attr('href', 'assets/logo2.png')
+                .attr('href', 'assets/logo.png')
                 .attr('x', -width / 2)
                 .attr('y', 0)
                 .attr('width', width)
